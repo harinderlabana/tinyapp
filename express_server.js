@@ -1,13 +1,14 @@
 const express = require('express');
 const app = express();
-
-//default port
 const PORT = 8080;
 
 const urlDatabase = {
   b2xVn2: 'http://www.lighthouselabs.ca',
   '9sm5xk': 'http://www.google.com',
 };
+
+//use ejs as template engine
+app.set('view engine', 'ejs');
 
 //regester a handler for the root "/" path
 app.get('/', (req, res) => {
