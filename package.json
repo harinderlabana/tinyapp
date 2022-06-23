@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/harinderlabana/tinyapp/issues"
   },
-  "homepage": "https://github.com/harinderlabana/tinyapp#readme"
+  "homepage": "https://github.com/harinderlabana/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.18.1"
+  }
 }
