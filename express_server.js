@@ -9,8 +9,13 @@ const urlDatabase = {
   '9sm5xk': 'http://www.google.com',
 };
 
+//regester a handler for the root "/" path
 app.get('/', (req, res) => {
   res.send('Hello!');
+});
+
+app.get('/urls.json', (req, res) => {
+  res.json(urlDatabase);
 });
 
 app.listen(PORT, () => {
