@@ -47,8 +47,12 @@ app.get('/urls/new', (req, res) => {
 
 //handler will post message on server of longURL for new submission
 app.post('/urls', (req, res) => {
-  console.log(req.body);
-  res.send('Ok');
+  const {shortURL, longURL} = req.body;
+  urlDatabase = {
+    shortURL: generateRandomString(6),
+    longURL: longURL,
+  };
+  res.redirect('/urls');
 });
 
 //handler for the root "/urls/:shortURL" path
