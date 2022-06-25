@@ -17,12 +17,12 @@ function generateRandomString(n) {
   return randomString;
 }
 
-const urlDatabase = {
+let urlDatabase = {
   b2xVn2: 'http://www.lighthouselabs.ca',
   '9sm5xk': 'http://www.google.com',
 };
 
-//middleware
+//middleware - body-parser
 app.use(bodyParser.urlencoded({extended: true}));
 
 //use ejs as template engine
@@ -45,14 +45,11 @@ app.get('/urls/new', (req, res) => {
   res.render('urls_new');
 });
 
-//handler will post message on server of longURL for new submission
+//handler that will assign a randomly generated shortURL to a longURL submission
 app.post('/urls', (req, res) => {
-  const {shortURL, longURL} = req.body;
-  urlDatabase = {
-    shortURL: generateRandomString(6),
-    longURL: longURL,
-  };
-  res.redirect('/urls');
+  urlDatabase[generateRandomString(6)] = req.body.longURL;
+  console.log(urlDatabase);
+  res.redirect('Ok');
 });
 
 //handler for the root "/urls/:shortURL" path
