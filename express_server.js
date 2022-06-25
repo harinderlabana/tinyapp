@@ -47,9 +47,10 @@ app.get('/urls/new', (req, res) => {
 
 //handler that will assign a randomly generated shortURL to a longURL submission
 app.post('/urls', (req, res) => {
-  urlDatabase[generateRandomString(6)] = req.body.longURL;
+  const shortURL = generateRandomString(6);
+  urlDatabase[shortURL] = req.body.longURL;
   console.log(urlDatabase);
-  res.redirect('Ok');
+  res.redirect(`/urls/${shortURL}`);
 });
 
 //handler for the root "/urls/:shortURL" path
