@@ -33,16 +33,16 @@ app.get('/', (req, res) => {
   res.send('Hello!');
 });
 
+//handler will render the form
+app.get('/urls/new', (req, res) => {
+  res.render('urls_new');
+});
+
 //handler for the root "/urls" path
 app.get('/urls', (req, res) => {
   const templateVars = {urls: urlDatabase};
   //express knows to look in the 'views' folder when acessing 'urls_index'  no need to show path
   res.render('urls_index', templateVars);
-});
-
-//handler will render the form
-app.get('/urls/new', (req, res) => {
-  res.render('urls_new');
 });
 
 //handler that will assign a randomly generated shortURL to a longURL submission
@@ -57,9 +57,19 @@ app.post('/urls', (req, res) => {
 app.get('/urls/:shortURL', (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
-    longURL: req.params.longURL,
+    longURL: urlDatabase[req.params.shortURL],
   };
+  // console.log(templateVars);
   res.render('urls_show', templateVars);
+});
+
+//hander for redirection to longURL
+app.get('/u/:shortURL', (req, res) => {
+  // console.log(Object.values(req.params));
+  const shortURL = Object.values(req.params);
+  const longURL = urlDatabase[shortURL];
+  // console.log(shortURL, longURL);
+  res.redirect(longURL);
 });
 
 //handler for the root "/urls.json" path
