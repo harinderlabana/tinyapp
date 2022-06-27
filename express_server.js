@@ -53,6 +53,12 @@ app.post('/urls', (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
+//handler to redirect from edit button to main list of urls
+app.post('/urls/:shortURL', (req, res) => {
+  urlDatabase[req.params.shortURL] = req.body.longURL;
+  res.redirect('/urls');
+});
+
 //handler to delete URL entries
 app.post('/urls/:shortURL/delete', (req, res) => {
   const {shortURL} = req.params;
@@ -66,16 +72,13 @@ app.get('/urls/:shortURL', (req, res) => {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
   };
-  // console.log(templateVars);
   res.render('urls_show', templateVars);
 });
 
-//hander for redirection to longURL
+//handler for redirection to longURL via shortURL link
 app.get('/u/:shortURL', (req, res) => {
-  // console.log(Object.values(req.params));
   const shortURL = Object.values(req.params);
   const longURL = urlDatabase[shortURL];
-  // console.log(shortURL, longURL);
   res.redirect(longURL);
 });
 
@@ -89,6 +92,7 @@ app.get('/hello', (req, res) => {
   res.send('<html><body>Hello <b>World</b></body></html>');
 });
 
+//event listener showing server is awake and ready
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
