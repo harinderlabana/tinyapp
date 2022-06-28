@@ -88,7 +88,6 @@ POST REQUESTS
 //handler that will assign a randomly generated shortURL to a longURL submission
 app.post('/urls', (req, res) => {
   //check if it received
-  console.log(req.body);
   if (req.body.longURL !== '') {
     const shortURL = generateRandomString(6);
     urlDatabase[shortURL] = req.body.longURL;
