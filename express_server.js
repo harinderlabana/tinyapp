@@ -24,6 +24,11 @@ let urlDatabase = {
   '9sm5xk': 'http://www.google.com',
 };
 
+let users = [
+  {id: '123', email: 'someone@gmail.com', password: '1fgdag23'},
+  {id: 'aML', email: 'sunny.labana@gmail.com', password: '123'},
+];
+
 /*********************
 MIDDLEWARE REQUESTS
 **********************/
@@ -58,29 +63,64 @@ app.get('/urls.json', (req, res) => {
 
 //handler for the list of urls
 app.get('/urls', (req, res) => {
+  let currentUser = false;
+  for (const user of users) {
+    if (user.id === req.cookies['userID']) {
+      currentUser = user;
+    }
+  }
+
   const templateVars = {
     urls: urlDatabase,
-    username: req.cookies['username'],
+    user: currentUser,
   };
+
   res.render('urls_index', templateVars);
 });
 
 //handler for creating a new url
 app.get('/urls/new', (req, res) => {
+  let currentUser = false;
+  for (const user of users) {
+    if (user.id === req.cookies['userID']) {
+      currentUser = user;
+    }
+  }
   const templateVars = {
-    username: req.cookies['username'],
+    user: currentUser,
   };
   res.render('urls_new', templateVars);
 });
 
+//handler for register
+app.get('/register', (req, res) => {
+  let currentUser = false;
+  for (const user of users) {
+    if (user.id === req.cookies['userID']) {
+      currentUser = user;
+    }
+  }
+  const templateVars = {
+    user: currentUser,
+  };
+  res.render('urls_register', templateVars);
+});
+
 //handler for the new shortURL
 app.get('/urls/:shortURL', (req, res) => {
+  let currentUser = false;
+  for (const user of users) {
+    if (user.id === req.cookies['userID']) {
+      currentUser = user;
+    }
+  }
+
   const longURL = urlDatabase[req.params.shortURL];
   const shortURL = req.params.shortURL;
   const templateVars = {
     shortURL,
     longURL,
-    username: req.cookies['username'],
+    user: currentUser,
   };
   res.render('urls_show', templateVars);
 });
@@ -118,8 +158,40 @@ app.post('/login', (req, res) => {
 
 //handler for logout
 app.post('/logout', (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('userID');
   res.redirect('/urls');
+});
+
+//handler for register
+app.post('/register', (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  const id = generateRandomString(3);
+
+  if (email !== '' && password !== '') {
+    let exsistingUser = false;
+    for (const user of users) {
+      if (user.email === email) {
+        exsistingUser = true;
+      }
+    }
+    if (exsistingUser) {
+      res.status(400);
+      res.send('Error 400: This email address is already in use.');
+    } else if (!exsistingUser) {
+      users.push({
+        id,
+        email,
+        password,
+      });
+      res.cookie('userID', id);
+      res.redirect('/urls');
+    }
+  } else if (email === '' || password === '') {
+    res.status(400);
+    res.send('Error 400: Ooops, you forgot something!');
+    console.log(users);
+  }
 });
 
 //handler to redirect from edit button to main list of urls
