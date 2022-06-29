@@ -106,6 +106,20 @@ app.get('/register', (req, res) => {
   res.render('urls_register', templateVars);
 });
 
+//handler for login
+app.get('/login', (req, res) => {
+  let currentUser = false;
+  for (const user of users) {
+    if (user.id === req.cookies['userID']) {
+      currentUser = user;
+    }
+  }
+  const templateVars = {
+    user: currentUser,
+  };
+  res.render('urls_login', templateVars);
+});
+
 //handler for the new shortURL
 app.get('/urls/:shortURL', (req, res) => {
   let currentUser = false;
@@ -148,18 +162,29 @@ app.post('/urls', (req, res) => {
 
 //handler for login
 app.post('/login', (req, res) => {
-  if (req.body.username !== '') {
-    //writing a cookie
-    res.cookie('username', req.body.username);
-    //reading a cookie
-    res.redirect('/urls');
-  }
-});
+  const email = req.body.email;
+  const password = req.body.password;
 
-//handler for logout
-app.post('/logout', (req, res) => {
-  res.clearCookie('userID');
-  res.redirect('/urls');
+  if (email !== '' && password !== '') {
+    let exsistingUser = false;
+    for (const user of users) {
+      if (user.email === email && user.password === password) {
+        exsistingUser = user;
+      }
+    }
+    if (exsistingUser) {
+      res.cookie('userID', exsistingUser.id);
+      res.redirect('/urls');
+    } else if (!exsistingUser) {
+      res.status(400);
+      res.send(
+        'Error 400: This email is not accosiated with an account. Please register!'
+      );
+    }
+  } else if (email === '' || password === '') {
+    res.status(400);
+    res.send('Error 400: Ooops, you forgot something!');
+  }
 });
 
 //handler for register
@@ -190,8 +215,13 @@ app.post('/register', (req, res) => {
   } else if (email === '' || password === '') {
     res.status(400);
     res.send('Error 400: Ooops, you forgot something!');
-    console.log(users);
   }
+});
+
+//handler for logout
+app.post('/logout', (req, res) => {
+  res.clearCookie('userID');
+  res.redirect('/urls');
 });
 
 //handler to redirect from edit button to main list of urls

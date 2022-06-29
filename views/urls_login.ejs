@@ -8,18 +8,18 @@
       integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
       crossorigin="anonymous"
     />
-    <title>Register - TinyApp</title>
+    <title>Login - TinyApp</title>
   </head>
   <body>
     <%- include('partials/_header') %>
     <main style="margin: 1em">
-      <h3>Register Account</h3>
-      <form method="POST" action="/register">
+      <h3>Login to Account</h3>
+      <form method="POST" action="/login">
         <label for="user">Email:</label>
         <input id="'user" type="email" name="email"></label>
         <label for="pass">Password:</label>
         <input id="'pass" type="password" name="password"></label>
-        <button type="submit" class="btn btn-primary">Register</button>
+        <button type="submit" class="btn btn-primary">Login</button>
       </form>
     </main>
     <!-- Bootstrap JS -->
