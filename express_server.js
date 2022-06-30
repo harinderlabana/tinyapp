@@ -37,7 +37,7 @@ const generateRandomString = (n) => {
   return randomString;
 };
 
-//check user
+//check if user exsists with email
 const findUser = (email) => {
   for (const user of users) {
     if (user.email === email) {
@@ -47,7 +47,7 @@ const findUser = (email) => {
   return null;
 };
 
-//check user
+//check if user is logged in and has access
 const findID = (id) => {
   for (const user of users) {
     if (user.id === id) {
