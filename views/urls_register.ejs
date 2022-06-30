@@ -13,12 +13,18 @@
   <body>
     <%- include('partials/_header') %>
     <main style="margin: 1em">
-      <h3>Register Account</h3>
+      <h3>Create Account</h3>
       <form method="POST" action="/register">
-        <label for="user">Email:</label>
-        <input id="'user" type="email" name="email"></label>
-        <label for="pass">Password:</label>
-        <input id="'pass" type="password" name="password"></label>
+        <label for="user">Email address</label>
+          <br>
+        <input id="'user" type="email" name="email" placeholder="Enter email"></label>
+          <br>  
+          <br>
+        <label for="pass">Password</label>
+          <br>
+        <input id="'pass" type="password" name="password" placeholder="Password"></label>
+          <br>
+          <br>
         <button type="submit" class="btn btn-primary">Register</button>
       </form>
     </main>
