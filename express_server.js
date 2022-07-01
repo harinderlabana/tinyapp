@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
 const PORT = 8080;
 
 /*********************
@@ -9,30 +10,10 @@ Databases and Users
 **********************/
 
 //initial database
-const urlDatabase = {
-  b6UTxQ: {
-    longURL: 'https://www.tsn.ca',
-    userID: 'aJ48lW',
-  },
-  i3BoGr: {
-    longURL: 'https://www.google.ca',
-    userID: 'aJ48lW',
-  },
-  a6UTxQ: {
-    longURL: 'https://www.tsn.ca',
-    userID: 'bJ48lW',
-  },
-  a3BoGr: {
-    longURL: 'https://www.google.ca',
-    userID: 'bJ48lW',
-  },
-};
+const urlDatabase = {};
 
 //initial users
-let users = [
-  {id: 'aJ48lW', email: 'someone@gmail.com', password: '1fgdag23'},
-  {id: 'bJ48lW', email: 'sunny.labana@gmail.com', password: '123'},
-];
+let users = [];
 
 /*********************
 Helper Functions
@@ -160,6 +141,10 @@ app.get('/urls/:shortURL', (req, res) => {
     res.status(401);
     res.send('Error 401: Unauthorized Access!\n');
   } else {
+    if (urlDatabase[req.params.shortURL] === undefined) {
+      res.status(400);
+      res.send('Error 400: Invalid Request');
+    }
     const templateVars = {
       shortURL: req.params.shortURL,
       longURL: urlDatabase[req.params.shortURL].longURL,
@@ -202,9 +187,10 @@ app.post('/login', (req, res) => {
   const password = req.body.password;
 
   if (email !== '' && password !== '') {
-    let exsistingUser = findUser(email);
+    const exsistingUser = findUser(email);
     if (exsistingUser) {
-      if (exsistingUser.password === password) {
+      const passMatch = bcrypt.compareSync(password, exsistingUser.password);
+      if (passMatch) {
         res.cookie('userID', exsistingUser.id);
         res.redirect('/urls');
       } else {
@@ -235,10 +221,11 @@ app.post('/register', (req, res) => {
       res.status(400);
       res.send('Error 400: This email address is already registered!');
     } else if (!exsistingUser) {
+      const hash = bcrypt.hashSync(password, 10);
       users.push({
         id,
         email,
-        password,
+        password: hash,
       });
       res.cookie('userID', id);
       res.redirect('/urls');
