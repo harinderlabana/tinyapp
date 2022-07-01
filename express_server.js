@@ -61,7 +61,7 @@ const findUser = (email) => {
   return null;
 };
 
-//check if user is logged in and has access
+//check if user is logged in and has Access
 const findID = (id) => {
   for (const user of users) {
     if (user.id === id) {
@@ -155,12 +155,18 @@ app.get('/login', (req, res) => {
 
 //handler for the new shortURL
 app.get('/urls/:shortURL', (req, res) => {
-  const templateVars = {
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL].longURL,
-    user: findID(req.cookies['userID']),
-  };
-  res.render('urls_show', templateVars);
+  const checkUserID = findID(req.cookies['userID']);
+  if (checkUserID === null) {
+    res.status(401);
+    res.send('Error 401: Unauthorized Access!\n');
+  } else {
+    const templateVars = {
+      shortURL: req.params.shortURL,
+      longURL: urlDatabase[req.params.shortURL].longURL,
+      user: findID(req.cookies['userID']),
+    };
+    res.render('urls_show', templateVars);
+  }
 });
 
 //handler for redirection to longURL via shortURL link
@@ -177,7 +183,7 @@ app.post('/urls', (req, res) => {
   const checkUserID = findID(req.cookies['userID']);
   if (checkUserID === null) {
     res.status(401);
-    res.send('Error 401: Unauthorized access!\n');
+    res.send('Error 401: Unauthorized Access!\n');
   } else {
     if (req.body.longURL !== '') {
       const shortURL = generateRandomString(6);
@@ -253,16 +259,33 @@ app.post('/logout', (req, res) => {
 app.post('/urls/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = req.body.longURL;
-  if (longURL !== '') {
-    urlDatabase[shortURL] = longURL;
-    res.redirect('/urls');
+  const activeUser = req.cookies['userID'];
+  const linkOwner = urlDatabase[shortURL].userID;
+
+  if (activeUser === linkOwner) {
+    if (longURL !== '') {
+      urlDatabase[shortURL].longURL = longURL;
+      res.redirect('/urls');
+    }
+  } else {
+    res.status(401);
+    res.send('Error 401: Unauthorized Access!');
   }
 });
 
 //handler to delete URL entries
 app.post('/urls/:shortURL/delete', (req, res) => {
-  delete urlDatabase[req.params.shortURL];
-  res.redirect('/urls');
+  const shortURL = req.params.shortURL;
+  const activeUser = req.cookies['userID'];
+  const linkOwner = urlDatabase[shortURL].userID;
+
+  if (activeUser === linkOwner) {
+    delete urlDatabase[req.params.shortURL];
+    res.redirect('/urls');
+  } else {
+    res.status(400);
+    res.send('Error 400: Bad Request!');
+  }
 });
 
 /*********************
