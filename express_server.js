@@ -9,15 +9,29 @@ Databases and Users
 **********************/
 
 //initial database
-let urlDatabase = {
-  b2xVn2: 'http://www.lighthouselabs.ca',
-  '9sm5xk': 'http://www.google.com',
+const urlDatabase = {
+  b6UTxQ: {
+    longURL: 'https://www.tsn.ca',
+    userID: 'aJ48lW',
+  },
+  i3BoGr: {
+    longURL: 'https://www.google.ca',
+    userID: 'aJ48lW',
+  },
+  a6UTxQ: {
+    longURL: 'https://www.tsn.ca',
+    userID: 'bJ48lW',
+  },
+  a3BoGr: {
+    longURL: 'https://www.google.ca',
+    userID: 'bJ48lW',
+  },
 };
 
 //initial users
 let users = [
-  {id: '123', email: 'someone@gmail.com', password: '1fgdag23'},
-  {id: 'aML', email: 'sunny.labana@gmail.com', password: '123'},
+  {id: 'aJ48lW', email: 'someone@gmail.com', password: '1fgdag23'},
+  {id: 'bJ48lW', email: 'sunny.labana@gmail.com', password: '123'},
 ];
 
 /*********************
@@ -57,6 +71,18 @@ const findID = (id) => {
   return null;
 };
 
+//create a database unique to the user
+const urlsForUser = (userID) => {
+  const obj = {};
+  const keys = Object.keys(urlDatabase);
+  for (const shortURL of keys) {
+    if (userID === urlDatabase[shortURL].userID) {
+      obj[shortURL] = urlDatabase[shortURL];
+    }
+  }
+  return obj;
+};
+
 /*********************
 MIDDLEWARE
 **********************/
@@ -92,7 +118,7 @@ app.get('/urls.json', (req, res) => {
 //handler for the list of urls
 app.get('/urls', (req, res) => {
   const templateVars = {
-    urls: urlDatabase,
+    urls: urlsForUser(req.cookies['userID']),
     user: findID(req.cookies['userID']),
   };
   res.render('urls_index', templateVars);
@@ -100,10 +126,15 @@ app.get('/urls', (req, res) => {
 
 //handler for creating a new url
 app.get('/urls/new', (req, res) => {
-  const templateVars = {
-    user: findID(req.cookies['userID']),
-  };
-  res.render('urls_new', templateVars);
+  const checkUserID = findID(req.cookies['userID']);
+  if (checkUserID === null) {
+    res.redirect('/login');
+  } else {
+    const templateVars = {
+      user: findID(req.cookies['userID']),
+    };
+    res.render('urls_new', templateVars);
+  }
 });
 
 //handler for register
@@ -126,7 +157,7 @@ app.get('/login', (req, res) => {
 app.get('/urls/:shortURL', (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
+    longURL: urlDatabase[req.params.shortURL].longURL,
     user: findID(req.cookies['userID']),
   };
   res.render('urls_show', templateVars);
@@ -134,7 +165,7 @@ app.get('/urls/:shortURL', (req, res) => {
 
 //handler for redirection to longURL via shortURL link
 app.get('/u/:shortURL', (req, res) => {
-  res.redirect(urlDatabase[req.params.shortURL]);
+  res.redirect(urlDatabase[req.params.shortURL].longURL);
 });
 
 /*********************
@@ -143,11 +174,19 @@ POST REQUESTS
 
 //handler that will assign a randomly generated shortURL to a longURL submission
 app.post('/urls', (req, res) => {
-  //check if it received
-  if (req.body.longURL !== '') {
-    const shortURL = generateRandomString(6);
-    urlDatabase[shortURL] = req.body.longURL;
-    res.redirect(`/urls/${shortURL}`);
+  const checkUserID = findID(req.cookies['userID']);
+  if (checkUserID === null) {
+    res.status(401);
+    res.send('Error 401: Unauthorized access!\n');
+  } else {
+    if (req.body.longURL !== '') {
+      const shortURL = generateRandomString(6);
+      urlDatabase[shortURL] = {
+        longURL: req.body.longURL,
+        userID: req.cookies['userID'],
+      };
+      res.redirect(`/urls/${shortURL}`);
+    }
   }
 });
 
@@ -182,11 +221,10 @@ app.post('/login', (req, res) => {
 app.post('/register', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const id = generateRandomString(3);
+  const id = generateRandomString(6);
 
   if (email !== '' && password !== '') {
     let exsistingUser = findUser(email);
-
     if (exsistingUser) {
       res.status(400);
       res.send('Error 400: This email address is already registered!');
