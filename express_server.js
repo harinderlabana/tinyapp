@@ -22,7 +22,7 @@ app.use(
 );
 
 /*********************
-Databases and Users
+URL Databases and Users
 **********************/
 
 const urlDatabase = {};
@@ -179,7 +179,6 @@ app.post('/urls', (req, res) => {
 app.post('/login', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-
   if (email !== '' && password !== '') {
     const exsistingUser = getUserByEmail(email, users);
     if (exsistingUser) {
@@ -194,7 +193,7 @@ app.post('/login', (req, res) => {
     } else if (!exsistingUser) {
       res.status(403);
       res.send(
-        'Error 403: This email is not accosiated with an account. Please try again or register for a new account!'
+        'Error 403: This email is not accosiated with any account!'
       );
     }
   } else if (email === '' || password === '') {
@@ -208,7 +207,6 @@ app.post('/register', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const id = generateRandomString(6);
-
   if (email !== '' && password !== '') {
     let exsistingUser = getUserByEmail(email, users);
     if (exsistingUser) {
@@ -232,7 +230,6 @@ app.post('/register', (req, res) => {
 
 //handler for logout
 app.post('/logout', (req, res) => {
-  // res.clearCookie('userID');
   req.session = null;
   res.redirect('/urls');
 });
@@ -243,7 +240,6 @@ app.post('/urls/:shortURL', (req, res) => {
   const longURL = req.body.longURL;
   const activeUser = req.session['userID'];
   const linkOwner = urlDatabase[shortURL].userID;
-
   if (activeUser === linkOwner) {
     if (longURL !== '') {
       urlDatabase[shortURL].longURL = longURL;
@@ -260,13 +256,12 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   const shortURL = req.params.shortURL;
   const activeUser = req.session['userID'];
   const linkOwner = urlDatabase[shortURL].userID;
-
   if (activeUser === linkOwner) {
     delete urlDatabase[req.params.shortURL];
     res.redirect('/urls');
   } else {
-    res.status(400);
-    res.send('Error 400: Bad Request!');
+    res.status(401);
+    res.send('Error 401: Unauthorized Access!');
   }
 });
 
