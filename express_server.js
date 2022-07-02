@@ -3,7 +3,7 @@ const app = express();
 const bodyParser = require('body-parser');
 const bcrypt = require('bcryptjs');
 const cookieSession = require('cookie-session');
-const getUserByEmail = require('./helpers');
+// const {findUser } = require('./helpers');
 
 const PORT = 8080;
 
@@ -44,6 +44,16 @@ const generateRandomString = (n) => {
     );
   }
   return randomString;
+};
+
+//check if user exsists with email
+const findUser = (email) => {
+  for (const user of users) {
+    if (user.email === email) {
+      return user;
+    }
+  }
+  return null;
 };
 
 //check if user is logged in and has Access
@@ -181,7 +191,7 @@ app.post('/login', (req, res) => {
   const password = req.body.password;
 
   if (email !== '' && password !== '') {
-    const exsistingUser = getUserByEmail(email, users);
+    const exsistingUser = findUser(email);
     if (exsistingUser) {
       const passMatch = bcrypt.compareSync(password, exsistingUser.password);
       if (passMatch) {
@@ -210,7 +220,7 @@ app.post('/register', (req, res) => {
   const id = generateRandomString(6);
 
   if (email !== '' && password !== '') {
-    let exsistingUser = getUserByEmail(email, users);
+    let exsistingUser = findUser(email);
     if (exsistingUser) {
       res.status(400);
       res.send('Error 400: This email address is already registered!');
