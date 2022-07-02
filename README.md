@@ -12,8 +12,8 @@ TinyApp is web based application that allows you to shorten any URL link and sha
 
 ## Final Product
 
-!["Registration"]()
-!["Login"]()
-!["New URL"]()
-!["Edit/Access URL"]()
-!["My URLS"]()
+!["Registration"](https://github.com/harinderlabana/tinyapp/blob/main/docs/registration.png?raw=true)
+!["Login"](https://github.com/harinderlabana/tinyapp/blob/main/docs/login.png?raw=true)
+!["New URL"](https://github.com/harinderlabana/tinyapp/blob/main/docs/createnewurl.png?raw=true)
+!["Edit/Access URL"](https://github.com/harinderlabana/tinyapp/blob/main/docs/shorturl.png?raw=true)
+!["My URLS"](https://github.com/harinderlabana/tinyapp/blob/main/docs/myurlspop.png?raw=true)
