@@ -1,18 +1,32 @@
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
+const cookieSession = require('cookie-session');
+const getUserByEmail = require('./helpers');
+
 const PORT = 8080;
+
+/*********************
+MIDDLEWARE
+**********************/
+
+app.use(bodyParser.urlencoded({extended: true}));
+
+app.use(
+  cookieSession({
+    name: 'session',
+    keys: ['notsecret', 'maybesecret', 'definitelysecret'],
+    maxAge: 24 * 60 * 60 * 1000,
+  })
+);
 
 /*********************
 Databases and Users
 **********************/
 
-//initial database
 const urlDatabase = {};
 
-//initial users
 let users = [];
 
 /*********************
@@ -30,16 +44,6 @@ const generateRandomString = (n) => {
     );
   }
   return randomString;
-};
-
-//check if user exsists with email
-const findUser = (email) => {
-  for (const user of users) {
-    if (user.email === email) {
-      return user;
-    }
-  }
-  return null;
 };
 
 //check if user is logged in and has Access
@@ -63,16 +67,6 @@ const urlsForUser = (userID) => {
   }
   return obj;
 };
-
-/*********************
-MIDDLEWARE
-**********************/
-
-//body-parser
-app.use(bodyParser.urlencoded({extended: true}));
-
-//cookie-parser
-app.use(cookieParser());
 
 /*********************
 GET REQUESTS
@@ -99,20 +93,20 @@ app.get('/urls.json', (req, res) => {
 //handler for the list of urls
 app.get('/urls', (req, res) => {
   const templateVars = {
-    urls: urlsForUser(req.cookies['userID']),
-    user: findID(req.cookies['userID']),
+    urls: urlsForUser(req.session['userID']),
+    user: findID(req.session['userID']),
   };
   res.render('urls_index', templateVars);
 });
 
 //handler for creating a new url
 app.get('/urls/new', (req, res) => {
-  const checkUserID = findID(req.cookies['userID']);
+  const checkUserID = findID(req.session['userID']);
   if (checkUserID === null) {
     res.redirect('/login');
   } else {
     const templateVars = {
-      user: findID(req.cookies['userID']),
+      user: findID(req.session['userID']),
     };
     res.render('urls_new', templateVars);
   }
@@ -121,7 +115,7 @@ app.get('/urls/new', (req, res) => {
 //handler for register
 app.get('/register', (req, res) => {
   const templateVars = {
-    user: findID(req.cookies['userID']),
+    user: findID(req.session['userID']),
   };
   res.render('urls_register', templateVars);
 });
@@ -129,14 +123,14 @@ app.get('/register', (req, res) => {
 //handler for login
 app.get('/login', (req, res) => {
   const templateVars = {
-    user: findID(req.cookies['userID']),
+    user: findID(req.session['userID']),
   };
   res.render('urls_login', templateVars);
 });
 
 //handler for the new shortURL
 app.get('/urls/:shortURL', (req, res) => {
-  const checkUserID = findID(req.cookies['userID']);
+  const checkUserID = findID(req.session['userID']);
   if (checkUserID === null) {
     res.status(401);
     res.send('Error 401: Unauthorized Access!\n');
@@ -148,7 +142,7 @@ app.get('/urls/:shortURL', (req, res) => {
     const templateVars = {
       shortURL: req.params.shortURL,
       longURL: urlDatabase[req.params.shortURL].longURL,
-      user: findID(req.cookies['userID']),
+      user: findID(req.session['userID']),
     };
     res.render('urls_show', templateVars);
   }
@@ -165,7 +159,7 @@ POST REQUESTS
 
 //handler that will assign a randomly generated shortURL to a longURL submission
 app.post('/urls', (req, res) => {
-  const checkUserID = findID(req.cookies['userID']);
+  const checkUserID = findID(req.session['userID']);
   if (checkUserID === null) {
     res.status(401);
     res.send('Error 401: Unauthorized Access!\n');
@@ -174,7 +168,7 @@ app.post('/urls', (req, res) => {
       const shortURL = generateRandomString(6);
       urlDatabase[shortURL] = {
         longURL: req.body.longURL,
-        userID: req.cookies['userID'],
+        userID: req.session['userID'],
       };
       res.redirect(`/urls/${shortURL}`);
     }
@@ -187,11 +181,11 @@ app.post('/login', (req, res) => {
   const password = req.body.password;
 
   if (email !== '' && password !== '') {
-    const exsistingUser = findUser(email);
+    const exsistingUser = getUserByEmail(email, users);
     if (exsistingUser) {
       const passMatch = bcrypt.compareSync(password, exsistingUser.password);
       if (passMatch) {
-        res.cookie('userID', exsistingUser.id);
+        req.session['userID'] = exsistingUser.id;
         res.redirect('/urls');
       } else {
         res.status(403);
@@ -216,7 +210,7 @@ app.post('/register', (req, res) => {
   const id = generateRandomString(6);
 
   if (email !== '' && password !== '') {
-    let exsistingUser = findUser(email);
+    let exsistingUser = getUserByEmail(email, users);
     if (exsistingUser) {
       res.status(400);
       res.send('Error 400: This email address is already registered!');
@@ -227,7 +221,7 @@ app.post('/register', (req, res) => {
         email,
         password: hash,
       });
-      res.cookie('userID', id);
+      req.session['userID'] = id;
       res.redirect('/urls');
     }
   } else if (email === '' || password === '') {
@@ -238,7 +232,8 @@ app.post('/register', (req, res) => {
 
 //handler for logout
 app.post('/logout', (req, res) => {
-  res.clearCookie('userID');
+  // res.clearCookie('userID');
+  req.session = null;
   res.redirect('/urls');
 });
 
@@ -246,7 +241,7 @@ app.post('/logout', (req, res) => {
 app.post('/urls/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = req.body.longURL;
-  const activeUser = req.cookies['userID'];
+  const activeUser = req.session['userID'];
   const linkOwner = urlDatabase[shortURL].userID;
 
   if (activeUser === linkOwner) {
@@ -263,7 +258,7 @@ app.post('/urls/:shortURL', (req, res) => {
 //handler to delete URL entries
 app.post('/urls/:shortURL/delete', (req, res) => {
   const shortURL = req.params.shortURL;
-  const activeUser = req.cookies['userID'];
+  const activeUser = req.session['userID'];
   const linkOwner = urlDatabase[shortURL].userID;
 
   if (activeUser === linkOwner) {
