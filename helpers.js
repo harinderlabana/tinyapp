@@ -1,10 +1,8 @@
 //check if user exsists with email inside user database
-const getUserByEmail = (email, database) => {
-  if (database !== undefined) {
-    for (const user of database) {
-      if (database[user].email === email) {
-        return database[user];
-      }
+const getUserByEmail = (email, users) => {
+  for (const user of users) {
+    if (user.email === email) {
+      return user;
     }
   }
   return null;

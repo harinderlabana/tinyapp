@@ -1,6 +1,6 @@
 const assert = require('chai').assert;
 
-// const getUserByEmail = require('../helpers.js');
+const getUserByEmail = require('../helpers.js');
 
 const testUsers = [
   {
@@ -15,14 +15,11 @@ const testUsers = [
   },
 ];
 
-// describe('#getUserByEmail', () => {
-//   it('should return a user with valid email', () => {
-//     const user = getUserByEmail('user@example.com', testUsers);
-//     const expectedUserID = 'userRandomID';
-//     assert.equal(user.id, expectedUserID);
-//   });
-// });
+describe('#getUserByEmail', () => {
+  it('should return a user with valid email', () => {
+    const user = getUserByEmail('user@example.com', testUsers);
+    const expectedUserID = 'userRandomID';
+    assert.equal(user.id, expectedUserID);
+  });
+});
 
-const expectedUserID = 'userRandomID';
-const emailAddress = 'user@example.com';
-const getUserByEmail = () => {};
