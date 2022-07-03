@@ -3,7 +3,12 @@ const app = express();
 const bodyParser = require('body-parser');
 const bcrypt = require('bcryptjs');
 const cookieSession = require('cookie-session');
-const getUserByEmail = require('./helpers');
+const {
+  getUserByEmail,
+  generateRandomString,
+  findID,
+  urlsForUser,
+} = require('./helpers');
 
 const PORT = 8080;
 
@@ -30,45 +35,6 @@ const urlDatabase = {};
 let users = [];
 
 /*********************
-Helper Functions
-**********************/
-
-//function to gernerate random alphanumerical string
-const generateRandomString = (n) => {
-  let randomString = '';
-  let characters =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (let i = 0; i < n; i++) {
-    randomString += characters.charAt(
-      Math.floor(Math.random() * characters.length)
-    );
-  }
-  return randomString;
-};
-
-//check if user is logged in and has Access
-const findID = (id) => {
-  for (const user of users) {
-    if (user.id === id) {
-      return user;
-    }
-  }
-  return null;
-};
-
-//create a database unique to the user
-const urlsForUser = (userID) => {
-  const obj = {};
-  const keys = Object.keys(urlDatabase);
-  for (const shortURL of keys) {
-    if (userID === urlDatabase[shortURL].userID) {
-      obj[shortURL] = urlDatabase[shortURL];
-    }
-  }
-  return obj;
-};
-
-/*********************
 GET REQUESTS
 **********************/
 
@@ -93,20 +59,20 @@ app.get('/urls.json', (req, res) => {
 //handler for the list of urls
 app.get('/urls', (req, res) => {
   const templateVars = {
-    urls: urlsForUser(req.session['userID']),
-    user: findID(req.session['userID']),
+    urls: urlsForUser(req.session['userID'], urlDatabase),
+    user: findID(req.session['userID'], users),
   };
   res.render('urls_index', templateVars);
 });
 
 //handler for creating a new url
 app.get('/urls/new', (req, res) => {
-  const checkUserID = findID(req.session['userID']);
+  const checkUserID = findID(req.session['userID'], users);
   if (checkUserID === null) {
     res.redirect('/login');
   } else {
     const templateVars = {
-      user: findID(req.session['userID']),
+      user: findID(req.session['userID'], users),
     };
     res.render('urls_new', templateVars);
   }
@@ -115,7 +81,7 @@ app.get('/urls/new', (req, res) => {
 //handler for register
 app.get('/register', (req, res) => {
   const templateVars = {
-    user: findID(req.session['userID']),
+    user: findID(req.session['userID'], users),
   };
   res.render('urls_register', templateVars);
 });
@@ -123,15 +89,18 @@ app.get('/register', (req, res) => {
 //handler for login
 app.get('/login', (req, res) => {
   const templateVars = {
-    user: findID(req.session['userID']),
+    user: findID(req.session['userID'], users),
   };
   res.render('urls_login', templateVars);
 });
 
 //handler for the new shortURL
 app.get('/urls/:shortURL', (req, res) => {
-  const checkUserID = findID(req.session['userID']);
-  if (checkUserID === null) {
+  const checkUserID = findID(req.session['userID'], users);
+  if (
+    checkUserID === null ||
+    checkUserID.id !== urlDatabase[req.params.shortURL].userID
+  ) {
     res.status(401);
     res.send('Error 401: Unauthorized Access!\n');
   } else {
@@ -142,7 +111,7 @@ app.get('/urls/:shortURL', (req, res) => {
     const templateVars = {
       shortURL: req.params.shortURL,
       longURL: urlDatabase[req.params.shortURL].longURL,
-      user: findID(req.session['userID']),
+      user: findID(req.session['userID'], users),
     };
     res.render('urls_show', templateVars);
   }
@@ -159,7 +128,7 @@ POST REQUESTS
 
 //handler that will assign a randomly generated shortURL to a longURL submission
 app.post('/urls', (req, res) => {
-  const checkUserID = findID(req.session['userID']);
+  const checkUserID = findID(req.session['userID'], users);
   if (checkUserID === null) {
     res.status(401);
     res.send('Error 401: Unauthorized Access!\n');
@@ -192,9 +161,7 @@ app.post('/login', (req, res) => {
       }
     } else if (!exsistingUser) {
       res.status(403);
-      res.send(
-        'Error 403: This email is not accosiated with any account!'
-      );
+      res.send('Error 403: This email is not accosiated with any account!');
     }
   } else if (email === '' || password === '') {
     res.status(400);
